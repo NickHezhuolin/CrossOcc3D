@@ -148,26 +148,27 @@ _num_points_self_ = 8
 model = dict(
     type='SimpleFormer',
     img_backbone=dict(
-        type='CustomEfficientNet',
-        arch='b7',
-        drop_path_rate=0.2,
-        frozen_stages=3,
-        norm_eval=False,
-        out_indices=(2, 3, 4, 5, 6),
-        with_cp=True,
         init_cfg=dict(type='Pretrained', prefix='backbone', 
-        checkpoint='./ckpts/efficientnet-b7_3rdparty_8xb32-aa_in1k_20220119-bf03951c.pth'),
+            checkpoint='.ckpts/convnext-small_in21k-pre_3rdparty_in1k_20221219-aeca4c93.pth'
+        ),
+        type='ConvNeXt',
+        arch='small',
+        with_cp=True,
+        frozen_stages=0,
+        drop_path_rate=0.4,
+        layer_scale_init_value=1.0,
+        out_indices=[0, 1, 2, 3],
+        gap_before_final_norm=False,
     ),
     img_neck=dict(
         type='SECONDFPN',
-        in_channels=[48, 80, 224, 640, 2560],
-        upsample_strides=[0.5, 1, 2, 4, 4], 
-        out_channels=[128, 128, 128, 128, 128]),
+        in_channels=[128, 256, 512, 1024],
+        upsample_strides=[0.25, 0.5, 1, 2],
+        out_channels=[128, 128, 128, 128]),
     img_view_transformer=dict(
-        type='LSSViewTransformer',
-        downsample=8,
-        grid_config=grid_config,
-        data_config=data_config,
+        type='FLoSP',
+        scene_size= [51.2, 51.2, 6.4],
+        project_res=[1,2,4,8]
     ),
     proposal_layer=dict(
         type='VoxelProposalLayer',
