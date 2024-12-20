@@ -1,6 +1,13 @@
 /data
-/packages
+/packages/DFA3D/.eggs/
+/packages/DFA3D/build/
+/packages/DFA3D/dfa3D.egg-info/
 *.pyc
 /ckpts
 /logs
 *.log
+
+**/.eggs/
+**/build/
+
+/packages/mmdetection3d/mmdet3d.egg-info/
