@@ -3,7 +3,7 @@ ann_file = 'data/SSCBenchKITTI360/unified/labels'
 stereo_depth_root = 'data/SSCBenchKITTI360/depth'
 camera_used = ['left']
 
-dataset_type = 'KITTI360Dataset'
+dataset_type = 'KITTI360Dataset_half'
 point_cloud_range = [0, -25.6, -2, 51.2, 25.6, 4.4]
 occ_size = [256, 256, 32]
 

@@ -31,7 +31,7 @@ class GeometryDepth_Net(BaseModule):
         downsample=8,
         numC_input=512,
         numC_Trans=64,
-        cam_channels=27,
+        cam_channels=33,
         grid_config=None,
         loss_depth_weight=1.0,
         loss_depth_type='bce',

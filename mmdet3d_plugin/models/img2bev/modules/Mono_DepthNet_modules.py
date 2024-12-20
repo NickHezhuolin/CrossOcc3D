@@ -146,7 +146,7 @@ class ASPP(nn.Module):
 
 class DepthNet(nn.Module):
     def __init__(self, in_channels, mid_channels, context_channels,
-                 depth_channels, cam_channels=27):
+                 depth_channels, cam_channels=33):
         super(DepthNet, self).__init__()
         self.reduce_conv = nn.Sequential(
             nn.Conv2d(in_channels,
@@ -197,17 +197,17 @@ class DepthNet(nn.Module):
     def forward(self, x, mlp_input):
         mlp_input = self.bn(mlp_input.reshape(-1, mlp_input.shape[-1]))
         x = self.reduce_conv(x)
-        context_se = self.context_mlp(mlp_input)[..., None, None]
+        context_se = self.context_mlp(mlp_input)[..., None, None] # BC11
         context = self.context_se(x, context_se)
         context = self.context_conv(context)
-        depth_se = self.depth_mlp(mlp_input)[..., None, None]
+        depth_se = self.depth_mlp(mlp_input)[..., None, None] # BC11
         depth = self.depth_se(x, depth_se)
         depth = self.depth_conv(depth)
         return torch.cat([depth, context], dim=1)
 
 class ContextNet(nn.Module):
     def __init__(self, in_channels, mid_channels, context_channels, 
-                 depth_channels, cam_channels=27):
+                 depth_channels, cam_channels=33):
         super(ContextNet, self).__init__()
         self.reduce_conv = nn.Sequential(
             nn.Conv2d(in_channels,

@@ -4,7 +4,7 @@ from mmdet.models import DETECTORS
 from mmdet3d.models import builder
 
 @DETECTORS.register_module()
-class SimpleLSSFormer(BaseModule):
+class SimpleBPFormer(BaseModule):
     def __init__(
         self,
         img_backbone,

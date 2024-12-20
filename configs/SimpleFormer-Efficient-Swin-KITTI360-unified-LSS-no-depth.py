@@ -151,7 +151,7 @@ model = dict(
         type='CustomEfficientNet',
         arch='b7',
         drop_path_rate=0.2,
-        frozen_stages=0,
+        frozen_stages=3,
         norm_eval=False,
         out_indices=(2, 3, 4, 5, 6),
         with_cp=True,
@@ -305,5 +305,3 @@ lr_scheduler = dict(
     interval="step",
     frequency=1
 )
-
-load_from='./ckpts/efficientnet-seg-depth.pth'
