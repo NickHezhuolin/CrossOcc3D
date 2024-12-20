@@ -2,11 +2,14 @@
 /packages/DFA3D/.eggs/
 /packages/DFA3D/build/
 /packages/DFA3D/dfa3D.egg-info/
+/packages/DFA3D/dist/
+
 *.pyc
 /ckpts
 /logs
 *.log
 
+**/dist/
 **/.eggs/
 **/build/
 
