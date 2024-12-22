@@ -25,6 +25,8 @@ def parse_config():
     parser.add_argument('--log_every_n_steps', type=int, default=1000)
     parser.add_argument('--check_val_every_n_epoch', type=int, default=1)
     parser.add_argument('--pretrain', action='store_true')
+    parser.add_argument('--resume_from_checkpoint', action='store_true')
+    parser.add_argument('--checkpoint_path', default='version_0')
 
     args = parser.parse_args()
     cfg = Config.fromfile(args.config_path)
@@ -60,24 +62,45 @@ if __name__ == '__main__':
         filename='best')
     
     if not config.eval:
-        trainer = pl.Trainer(
-            devices=[i for i in range(num_gpu)],
-            strategy=DDPStrategy(
-                accelerator='gpu',
-                find_unused_parameters=False
-            ),
-            max_steps=config.training_steps,
-            resume_from_checkpoint=None,
-            callbacks=[
-                checkpoint_callback,
-                LearningRateMonitor(logging_interval='step')
-            ],
-            logger=tb_logger,
-            profiler=profiler,
-            sync_batchnorm=True,
-            log_every_n_steps=config['log_every_n_steps'],
-            check_val_every_n_epoch=config['check_val_every_n_epoch']
-        )
+        model_path = os.path.join(log_folder, "tensorboard", config['checkpoint_path'], "checkpoints/last.ckpt")
+        if config['resume_from_checkpoint']==True and os.path.isfile(model_path):
+            trainer = pl.Trainer(
+                devices=[i for i in range(num_gpu)],
+                strategy=DDPStrategy(
+                    accelerator='gpu',
+                    find_unused_parameters=False
+                ),
+                max_steps=config.training_steps,
+                resume_from_checkpoint=model_path,
+                callbacks=[
+                    checkpoint_callback,
+                    LearningRateMonitor(logging_interval='step')
+                ],
+                logger=tb_logger,
+                profiler=profiler,
+                sync_batchnorm=True,
+                log_every_n_steps=config['log_every_n_steps'],
+                check_val_every_n_epoch=config['check_val_every_n_epoch'],
+            )
+        else:
+            trainer = pl.Trainer(
+                devices=[i for i in range(num_gpu)],
+                strategy=DDPStrategy(
+                    accelerator='gpu',
+                    find_unused_parameters=False
+                ),
+                max_steps=config.training_steps,
+                resume_from_checkpoint=None,
+                callbacks=[
+                    checkpoint_callback,
+                    LearningRateMonitor(logging_interval='step')
+                ],
+                logger=tb_logger,
+                profiler=profiler,
+                sync_batchnorm=True,
+                log_every_n_steps=config['log_every_n_steps'],
+                check_val_every_n_epoch=config['check_val_every_n_epoch']
+            )
         trainer.fit(model=model, datamodule=data_dm)
     else:
         trainer = pl.Trainer(

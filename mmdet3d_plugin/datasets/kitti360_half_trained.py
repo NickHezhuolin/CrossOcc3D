@@ -26,7 +26,7 @@ class KITTI360Dataset_half(Dataset):
         self.splits = {
             "train": [
                 "2013_05_28_drive_0000_sync",
-                # "2013_05_28_drive_0002_sync", "2013_05_28_drive_0003_sync", "2013_05_28_drive_0004_sync"
+                "2013_05_28_drive_0002_sync", "2013_05_28_drive_0003_sync", "2013_05_28_drive_0004_sync"
             ],
             "val": ["2013_05_28_drive_0006_sync"],
             "test": ["2013_05_28_drive_0009_sync"]

@@ -146,12 +146,12 @@ _num_layers_self_ = 2
 _num_points_self_ = 8
 
 model = dict(
-    type='SimpleFormer',
+    type='SimpleLSSFormer',
     img_backbone=dict(
         type='CustomEfficientNet',
         arch='b7',
         drop_path_rate=0.2,
-        frozen_stages=6,
+        frozen_stages=0,
         norm_eval=False,
         out_indices=(2, 3, 4, 5, 6),
         with_cp=True,
@@ -316,4 +316,4 @@ lr_scheduler = dict(
     frequency=1
 )
 
-load_from='./ckpts/efficientnet-seg-depth.pth'
+# load_from='./ckpts/efficientnet-seg-depth.pth'

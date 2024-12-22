@@ -66,9 +66,7 @@ class SimpleLSSFormer(BaseModule):
             if depth is not None:
                 coarse_queries = self.img_view_transformer(context, depth, img_inputs[1:7])
             else:
-                coarse_queries = self.img_view_transformer(context, img_inputs[1:7])
-        else:
-            coarse_queries = None
+                coarse_queries = None
 
         proposal = self.proposal_layer(img_inputs[1:7], img_metas)
 
@@ -88,10 +86,16 @@ class SimpleLSSFormer(BaseModule):
         img_metas = data_dict['img_metas']
         gt_occ = data_dict['gt_occ']
 
-        img_voxel_feats, depth = self.extract_img_feat(img_inputs, img_metas)
+        voxel_feats_enc, depth = self.extract_img_feat(img_inputs, img_metas)
+        
+        if len(voxel_feats_enc) > 1:
+            voxel_feats_enc = [voxel_feats_enc[0]]
+        
+        if type(voxel_feats_enc) is not list:
+            voxel_feats_enc = [voxel_feats_enc]
 
         output = self.pts_bbox_head(
-            voxel_feats=img_voxel_feats,
+            voxel_feats=voxel_feats_enc,
             img_metas=img_metas,
             img_feats=None,
             gt_occ=gt_occ
@@ -124,8 +128,7 @@ class SimpleLSSFormer(BaseModule):
         img_metas = data_dict['img_metas']
         gt_occ = data_dict['gt_occ']
 
-        img_voxel_feats, depth = self.extract_img_feat(img_inputs, img_metas)
-        voxel_feats_enc = self.occ_encoder(img_voxel_feats)
+        voxel_feats_enc, depth = self.extract_img_feat(img_inputs, img_metas)
 
         if len(voxel_feats_enc) > 1:
             voxel_feats_enc = [voxel_feats_enc[0]]
