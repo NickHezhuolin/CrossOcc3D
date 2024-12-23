@@ -13,3 +13,7 @@
 **/build/
 
 /packages/mmdetection3d/mmdet3d.egg-info/
+
+packages/DFA3D/dist/dfa3D-0.0.0-py3.7-linux-x86_64.egg
+packages/mmdetection3d/dist/mmdet3d-0.17.1-py3.7-linux-x86_64.egg
+packages/*/dist/*.egg
