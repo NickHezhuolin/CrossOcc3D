@@ -8,7 +8,6 @@
 /ckpts
 /logs
 *.log
-
 **/dist/
 **/.eggs/
 **/build/
