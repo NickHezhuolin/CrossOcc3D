@@ -1,6 +1,7 @@
 import os
 import glob
 import numpy as np
+from numba import njit, prange
 from mmdet.datasets import DATASETS
 from torch.utils.data import Dataset
 from mmdet.datasets.pipelines import Compose
@@ -29,8 +30,7 @@ class KITTI360Dataset_half_flosp(Dataset):
         self.load_continuous = load_continuous
         self.splits = {
             "train": [
-                "2013_05_28_drive_0000_sync",
-                # "2013_05_28_drive_0002_sync", "2013_05_28_drive_0003_sync", "2013_05_28_drive_0004_sync"
+                "2013_05_28_drive_0000_sync", "2013_05_28_drive_0002_sync", "2013_05_28_drive_0003_sync", "2013_05_28_drive_0004_sync"
             ],
             "val": ["2013_05_28_drive_0006_sync"],
             "test": ["2013_05_28_drive_0009_sync"]
@@ -52,11 +52,13 @@ class KITTI360Dataset_half_flosp(Dataset):
         self.frustum_size = frustum_size
         self.project_scale = project_scale
         self.output_scale = int(self.project_scale / 2)
-        self.scene_size = [51.2, 51.2, 6.4]
+        self.scene_size = (51.2, 51.2, 6.4)
         self.img_H = 376
         self.img_W = 1408
         
         self.label_root = label_root
+        self.vox_origin = np.array([0, -25.6, -2])
+        self.voxel_size = 0.2
 
         if pipeline is not None:
             self.pipeline = Compose(pipeline)
@@ -162,6 +164,8 @@ class KITTI360Dataset_half_flosp(Dataset):
         cam_k = info['P2'][0:3, 0:3]
         info["cam_k"] = cam_k
         
+        projected_pix_list = []
+        fov_mask_list = []
         for scale_3d in scale_3ds:
             projected_pix, fov_mask, pix_z = vox2pix(
                 info['T_velo_2_cam'],
@@ -175,7 +179,7 @@ class KITTI360Dataset_half_flosp(Dataset):
             info["projected_pix_{}".format(scale_3d)] = projected_pix
             info["fov_mask_{}".format(scale_3d)] = fov_mask
             info["pix_z_{}".format(scale_3d)] = pix_z
-
+            
         target_1_path = os.path.join(self.label_root, info['sequence'], info['frame_id'] + "_1_1.npy")
         target = np.load(target_1_path)
         info["target"] = target
@@ -205,6 +209,14 @@ class KITTI360Dataset_half_flosp(Dataset):
             frustums_class_dists = None
         info["frustums_masks"] = frustums_masks
         info["frustums_class_dists"] = frustums_class_dists
+        
+        input_dict.update(
+            dict(
+                projected_pix=info["projected_pix_{}".format(self.project_scale)],
+                fov_mask=info["fov_mask_{}".format(self.project_scale)],
+                frustums_masks=frustums_masks,
+                frustums_class_dists=frustums_class_dists,
+            ))
         
         return input_dict
     

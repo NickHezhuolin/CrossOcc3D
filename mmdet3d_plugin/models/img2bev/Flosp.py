@@ -11,9 +11,11 @@ class FLoSP(nn.Module):
         self.project_scale = project_scale
 
     def forward(self, x2d, projected_pix, fov_mask):
-        bs, c, h, w = x2d.shape
-        src = x2d.flatten(2)
-        src = F.pad(src, (0, 1), value=0)  # bs, c, h*w+1
+        bs, n, c, h, w = x2d.shape
+        x2d = x2d.view(bs * n, c, h, w)
+        
+        src = x2d.flatten(2) 
+        src = F.pad(src, (0, 1), value=0)  # bs, n, c, h*w+1
 
         img_indices = (
             projected_pix[..., 1].clamp(0, h - 1) * w + projected_pix[..., 0].clamp(0, w - 1))
@@ -23,7 +25,7 @@ class FLoSP(nn.Module):
             indices = indices.expand(c, -1).long()
             feat = torch.gather(src_, 1, indices)  # c, h*w*d
             feats.append(feat)
-
+        
         feats = torch.stack(feats)
         x3d = feats.reshape(bs, c, *[s // self.project_scale for s in self.scene_size])
         return x3d
@@ -39,7 +41,7 @@ class MultiScaleFLoSP(nn.Module):
     def forward(self, feats, projected_pix, fov_mask):
         x3ds = []
         for i, scale_2d in enumerate(self.view_scales):
-            x3d = self.projects[i](feats[i],
+            x3d = self.projects[i](feats[0],
                                    torch.div(projected_pix, scale_2d, rounding_mode='floor'),
                                    fov_mask)
             x3ds.append(x3d)

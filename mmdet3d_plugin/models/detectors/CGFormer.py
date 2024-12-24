@@ -96,7 +96,7 @@ class CGFormer(BaseModule):
         gt_occ = data_dict['gt_occ']
 
         img_voxel_feats, depth = self.extract_img_feat(img_inputs, img_metas)
-        
+
         voxel_feats_enc = self.occ_encoder(img_voxel_feats)
         
         if len(voxel_feats_enc) > 1:

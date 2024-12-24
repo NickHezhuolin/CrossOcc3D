@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
     seed = config.seed
     pl.seed_everything(seed)
-    num_gpu = torch.cuda.device_count()
+    num_gpu = config.gpu
     model = pl_model(config)
     
     data_dm = DataModule(config)

@@ -3,7 +3,7 @@ ann_file = 'data/SSCBenchKITTI360/unified/labels'
 stereo_depth_root = 'data/SSCBenchKITTI360/depth'
 camera_used = ['left']
 
-dataset_type = 'KITTI360Dataset_half'
+dataset_type = 'KITTI360Dataset_half_flosp'
 point_cloud_range = [0, -25.6, -2, 51.2, 25.6, 4.4]
 occ_size = [256, 256, 32]
 
@@ -66,13 +66,15 @@ train_pipeline = [
     dict(type='LoadAnnotationOcc', bda_aug_conf=bda_aug_conf, apply_bda=False,
             is_train=True, point_cloud_range=point_cloud_range),
     dict(type='CollectData', keys=['img_inputs', 'gt_occ'], 
-            meta_keys=['pc_range', 'occ_size', 'raw_img', 'stereo_depth', 'focal_length', 'baseline', 'img_shape', 'gt_depths']),
+            meta_keys=['pc_range', 'occ_size', 'raw_img', 'stereo_depth', 'focal_length', 
+                       'baseline', 'img_shape', 'gt_depths', 'projected_pix', 'fov_mask']),
 ]
 
 trainset_config=dict(
     type=dataset_type,
     stereo_depth_root=stereo_depth_root,
     data_root=data_root,
+    label_root=ann_file,
     ann_file=ann_file,
     pipeline=train_pipeline,
     split='train',
@@ -89,13 +91,16 @@ test_pipeline = [
     dict(type='LoadAnnotationOcc', bda_aug_conf=bda_aug_conf, apply_bda=False,
             is_train=False, point_cloud_range=point_cloud_range),
     dict(type='CollectData', keys=['img_inputs', 'gt_occ'],  
-            meta_keys=['pc_range', 'occ_size', 'sequence', 'frame_id', 'raw_img', 'stereo_depth', 'focal_length', 'baseline', 'img_shape', 'gt_depths'])
+            meta_keys=['pc_range', 'occ_size', 'sequence', 'frame_id', 'raw_img', 'stereo_depth',
+                       'focal_length', 'baseline', 'img_shape', 'gt_depths', 'projected_pix',
+                       'fov_mask'])
 ]
 
 testset_config=dict(
     type=dataset_type,
     stereo_depth_root=stereo_depth_root,
     data_root=data_root,
+    label_root=ann_file,
     ann_file=ann_file,
     pipeline=test_pipeline,
     split='test',
@@ -135,137 +140,55 @@ grid_config = {
     'dbound': [2.0, 58.0, 0.5],
 }
 
-_num_layers_cross_ = 3
-_num_points_cross_ = 8
-_num_levels_ = 1
-_num_cams_ = 1
 _dim_ = 128
-_pos_dim_ = _dim_//2
-
-_num_layers_self_ = 2
-_num_points_self_ = 8
+gpu=1
 
 model = dict(
-    type='SimpleFormer',
+    type='SimpleFlospFormer',
+    scene_size=(256, 256, 32),
+    view_scales=[1,2,4,8],
+    volume_scale=2,
     img_backbone=dict(
-        init_cfg=dict(type='Pretrained', prefix='backbone', 
-            checkpoint='.ckpts/convnext-small_in21k-pre_3rdparty_in1k_20221219-aeca4c93.pth'
-        ),
-        type='ConvNeXt',
-        arch='small',
-        with_cp=True,
+        type='CustomEfficientNet',
+        arch='b7',
+        drop_path_rate=0.2,
         frozen_stages=0,
-        drop_path_rate=0.4,
-        layer_scale_init_value=1.0,
-        out_indices=[0, 1, 2, 3],
-        gap_before_final_norm=False,
+        norm_eval=False,
+        out_indices=(2, 3, 4, 5, 6),
+        with_cp=True,
+        init_cfg=dict(type='Pretrained', prefix='backbone', 
+        checkpoint='./ckpts/efficientnet-b7_3rdparty_8xb32-aa_in1k_20220119-bf03951c.pth'),
     ),
     img_neck=dict(
         type='SECONDFPN',
-        in_channels=[128, 256, 512, 1024],
-        upsample_strides=[0.25, 0.5, 1, 2],
-        out_channels=[128, 128, 128, 128]),
-    img_view_transformer=dict(
-        type='FLoSP',
-        scene_size= [51.2, 51.2, 6.4],
-        project_res=[1,2,4,8]
-    ),
-    proposal_layer=dict(
-        type='VoxelProposalLayer',
-        point_cloud_range=[0, -25.6, -2, 51.2, 25.6, 4.4],
-        input_dimensions=[128, 128, 16],
-        data_config=data_config,
-        init_cfg=None
-    ),
-    VoxFormer_head=dict(
-        type='VoxFormerHead',
-        volume_h=128,
-        volume_w=128,
-        volume_z=16,
-        data_config=data_config,
-        point_cloud_range=point_cloud_range,
-        embed_dims=_dim_,
-        cross_transformer=dict(
-           type='PerceptionTransformer_DFA3D',
-           rotate_prev_bev=True,
-           use_shift=True,
-           embed_dims=_dim_,
-           num_cams = _num_cams_,
-           encoder=dict(
-               type='VoxFormerEncoder_DFA3D',
-               num_layers=_num_layers_cross_,
-               pc_range=point_cloud_range,
-               data_config=data_config,
-               num_points_in_pillar=8,
-               return_intermediate=False,
-               transformerlayers=dict(
-                   type='VoxFormerLayer',
-                   attn_cfgs=[
-                       dict(
-                           type='DeformCrossAttention_DFA3D',
-                           pc_range=point_cloud_range,
-                           num_cams=_num_cams_,
-                           deformable_attention=dict(
-                               type='MSDeformableAttention3D_DFA3D',
-                               embed_dims=_dim_,
-                               num_points=_num_points_cross_,
-                               num_levels=_num_levels_),
-                           embed_dims=_dim_,
-                       )
-                   ],
-                   ffn_cfgs=dict(
-                       type='FFN',
-                       embed_dims=_dim_,
-                       feedforward_channels=1024,
-                       num_fcs=2,
-                       ffn_drop=0.,
-                       act_cfg=dict(type='ReLU', inplace=True),
-                   ),
-                   feedforward_channels=_dim_ * 2,
-                   ffn_dropout=0.1,
-                   operation_order=('cross_attn', 'norm', 'ffn', 'norm')))),
-        self_transformer=dict(
-           type='PerceptionTransformer_DFA3D',
-           rotate_prev_bev=True,
-           use_shift=True,
-           embed_dims=_dim_,
-           num_cams = _num_cams_,
-           use_level_embeds = False,
-           use_cams_embeds = False,
-           encoder=dict(
-               type='VoxFormerEncoder',
-               num_layers=_num_layers_self_,
-               pc_range=point_cloud_range,
-               data_config=data_config,
-               num_points_in_pillar=8,
-               return_intermediate=False,
-               transformerlayers=dict(
-                   type='VoxFormerLayer',
-                   attn_cfgs=[
-                       dict(
-                           type='DeformSelfAttention',
-                           embed_dims=_dim_,
-                           num_levels=1,
-                           num_points=_num_points_self_)
-                   ],
-                   ffn_cfgs=dict(
-                       type='FFN',
-                       embed_dims=_dim_,
-                       feedforward_channels=1024,
-                       num_fcs=2,
-                       ffn_drop=0.,
-                       act_cfg=dict(type='ReLU', inplace=True),
-                   ),
-                   feedforward_channels=_dim_ * 2,
-                   ffn_dropout=0.1,
-                   operation_order=('self_attn', 'norm', 'ffn', 'norm')))),
-        positional_encoding=dict(
-            type='LearnedPositionalEncoding',
-            num_feats=_pos_dim_,
-            row_num_embed=512,
-            col_num_embed=512,
-           ),
-        mlp_prior=True
+        in_channels=[48, 80, 224, 640, 2560],
+        upsample_strides=[0.5, 1, 2, 4, 4], 
+        out_channels=[128, 128, 128, 128, 128]),
+    occ_encoder_backbone=dict(
+        type='LocalAggregator',
+        local_encoder_backbone=dict(
+            type='CustomResNet3D',
+            numC_input=128,
+            num_layer=[2, 2, 2],
+            num_channels=[128, 128, 128],
+            stride=[1, 2, 2]
+        ),
+        local_encoder_neck=dict(
+            type='GeneralizedLSSFPN',
+            in_channels=[128, 128, 128],
+            out_channels=_dim_,
+            start_level=0,
+            num_outs=3,
+            norm_cfg=norm_cfg,
+            conv_cfg=dict(type='Conv3d'),
+            act_cfg=dict(
+                type='ReLU',
+                inplace=True),
+            upsample_cfg=dict(
+                mode='trilinear',
+                align_corners=False
+            )
+        )
     ),
     pts_bbox_head=dict(
         type='OccHead',

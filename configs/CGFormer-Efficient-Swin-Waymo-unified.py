@@ -1,26 +1,24 @@
-data_root = 'data/SSCBenchKITTI360'
-ann_file = 'data/SSCBenchKITTI360/unified/labels'
-stereo_depth_root = 'data/SSCBenchKITTI360/depth'
-camera_used = ['left']
+data_root = 'data/SSCBenchWaymo'
+ann_file = 'data/SSCBenchWaymo/unified/labels'
+stereo_depth_root = 'data/SSCBenchWaymo/depth'
+camera_used = ['image_1']
 
-dataset_type = 'KITTI360Dataset_half'
+dataset_type = 'WaymoSSCBenchDataset'
 point_cloud_range = [0, -25.6, -2, 51.2, 25.6, 4.4]
 occ_size = [256, 256, 32]
 
-gpu=2
-
-kitti360_class_frequencies =  [
-    2305812911,
-    123212463,
-    96297,
-    4051087,   
-    45297267,
-    110397082,  
-    295883213,   
-    50037503,    
-    1561069,   
-    30516166,
-    1950115
+waymo_class_frequencies = [
+    6609676234,
+    80263507,
+    150778,
+    14621,
+    8407737,
+    314538602,
+    79803104,
+    119425715,
+    180969842,
+    228187327,
+    8890485,
 ]
 
 # 10 classes with unlabeled
@@ -371,7 +369,7 @@ model = dict(
         },
         conv_cfg=dict(type='Conv3d', bias=False),
         norm_cfg=dict(type='GN', num_groups=32, requires_grad=True),
-        class_frequencies=kitti360_class_frequencies
+        class_frequencies=waymo_class_frequencies
     )
 )
 
