@@ -324,7 +324,7 @@ if __name__ == '__main__':
                 module="mmdet3d.ops.voxel_pooling_stereo",
                 sources=[
                     "src/voxel_pooling_forward.cpp",
-                    "src/voxel_pooling_forward_cuda.cu"]),
+                    "src/voxel_pooling_forward_cuda.cu"])
         ],
         cmdclass={'build_ext': BuildExtension},
         zip_safe=False)

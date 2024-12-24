@@ -39,3 +39,4 @@ __all__ = [
     'PAConv', 'PAConvCUDA', 'PAConvSAModuleMSG', 'PAConvSAModule',
     'PAConvCUDASAModule', 'PAConvCUDASAModuleMSG'
 ]
+
