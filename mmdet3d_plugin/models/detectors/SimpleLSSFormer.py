@@ -13,6 +13,8 @@ class SimpleLSSFormer(BaseModule):
         img_view_transformer,
         proposal_layer,
         VoxFormer_head,
+        occ_encoder_backbone=None,
+        occ_encoder_neck=None,
         pts_bbox_head=None,
         depth_loss=False,
         train_cfg=None,
@@ -80,13 +82,24 @@ class SimpleLSSFormer(BaseModule):
         )
 
         return x, depth
+    
+    def occ_encoder(self, x):
+        if hasattr(self, 'occ_encoder_backbone'):
+            x = self.occ_encoder_backbone(x)
+        
+        if hasattr(self, 'occ_encoder_neck'):
+            x = self.occ_encoder_neck(x)
+        
+        return x
 
     def forward_train(self, data_dict):
         img_inputs = data_dict['img_inputs']
         img_metas = data_dict['img_metas']
         gt_occ = data_dict['gt_occ']
 
-        voxel_feats_enc, depth = self.extract_img_feat(img_inputs, img_metas)
+        img_voxel_feats, depth = self.extract_img_feat(img_inputs, img_metas)
+        
+        voxel_feats_enc = self.occ_encoder(img_voxel_feats)
         
         if len(voxel_feats_enc) > 1:
             voxel_feats_enc = [voxel_feats_enc[0]]
@@ -128,7 +141,9 @@ class SimpleLSSFormer(BaseModule):
         img_metas = data_dict['img_metas']
         gt_occ = data_dict['gt_occ']
 
-        voxel_feats_enc, depth = self.extract_img_feat(img_inputs, img_metas)
+        img_voxel_feats, depth = self.extract_img_feat(img_inputs, img_metas)
+        
+        voxel_feats_enc = self.occ_encoder(img_voxel_feats)
 
         if len(voxel_feats_enc) > 1:
             voxel_feats_enc = [voxel_feats_enc[0]]

@@ -3,8 +3,6 @@ ann_file = 'data/SSCBenchKITTI360/unified/labels'
 stereo_depth_root = 'data/SSCBenchKITTI360/depth'
 camera_used = ['left']
 
-gpu=2
-
 dataset_type = 'KITTI360Dataset_half'
 point_cloud_range = [0, -25.6, -2, 51.2, 25.6, 4.4]
 occ_size = [256, 256, 32]
@@ -150,31 +148,26 @@ _num_points_self_ = 8
 model = dict(
     type='SimpleLSSFormer',
     img_backbone=dict(
-        type='CustomEfficientNet',
-        arch='b7',
+        type="MaskConvNeXt",
+        arch="small",
         drop_path_rate=0.2,
-        frozen_stages=0,
-        norm_eval=False,
-        out_indices=(2, 3, 4, 5, 6),
-        with_cp=True,
-        init_cfg=dict(type='Pretrained', prefix='backbone', 
-        checkpoint='./ckpts/efficientnet-b7_3rdparty_8xb32-aa_in1k_20220119-bf03951c.pth'),
+        out_indices=(3),
+        norm_out=True,
+        frozen_stages=1,
+        init_cfg=dict(
+            type="Pretrained",
+            checkpoint="data/ckpts/processed_convnext_small_1k_224_ema.pth",
+        ),
     ),
     img_neck=dict(
-        type='SECONDFPN',
-        in_channels=[48, 80, 224, 640, 2560],
-        upsample_strides=[0.5, 1, 2, 4, 4], 
-        out_channels=[128, 128, 128, 128, 128]),
-    depth_net=dict(
-        type='GeometryDepth_Net',
-        downsample=8,
-        numC_input=640,
-        numC_Trans=numC_Trans,
-        cam_channels=33,
-        grid_config=grid_config,
-        loss_depth_type='kld',
-        loss_depth_weight=0.0001,
+        type="CustomFPN",
+        in_channels=[768],
+        out_channels=256,
+        num_outs=1,
+        start_level=0,
+        out_ids=[0],
     ),
+    depth_head=dict(type="ComplexDepth", use_dcn=False, aspp_mid_channels=96),
     img_view_transformer=dict(
         type='LSSViewTransformer',
         downsample=8,
@@ -277,32 +270,6 @@ model = dict(
             col_num_embed=512,
            ),
         mlp_prior=True
-    ),
-    occ_encoder_backbone=dict(
-        type='LocalAggregator',
-        local_encoder_backbone=dict(
-            type='CustomResNet3D',
-            numC_input=128,
-            num_layer=[2, 2, 2],
-            num_channels=[128, 128, 128],
-            stride=[1, 2, 2]
-        ),
-        local_encoder_neck=dict(
-            type='GeneralizedLSSFPN',
-            in_channels=[128, 128, 128],
-            out_channels=_dim_,
-            start_level=0,
-            num_outs=3,
-            norm_cfg=norm_cfg,
-            conv_cfg=dict(type='Conv3d'),
-            act_cfg=dict(
-                type='ReLU',
-                inplace=True),
-            upsample_cfg=dict(
-                mode='trilinear',
-                align_corners=False
-            )
-        )
     ),
     pts_bbox_head=dict(
         type='OccHead',
