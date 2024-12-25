@@ -141,7 +141,7 @@ grid_config = {
 }
 
 _dim_ = 128
-gpu=1
+gpu=4
 
 model = dict(
     type='SimpleFlospFormer',

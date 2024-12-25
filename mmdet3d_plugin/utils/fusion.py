@@ -199,22 +199,16 @@ class TSDFVolume:
                 .T
             )
 
-    # @staticmethod
-    # @njit(parallel=True)
+    @staticmethod
+    @njit(parallel=True)
     def vox2world(vol_origin, vox_coords, vox_size, offsets=(0.5, 0.5, 0.5)):
         """Convert voxel grid coordinates to world coordinates."""
         vol_origin = vol_origin.astype(np.float32)
         vox_coords = vox_coords.astype(np.float32)
+        offsets = np.array(offsets, dtype=np.float32)
 
-        cam_pts = np.empty_like(vox_coords, dtype=np.float32)
-
-        for i in range(vox_coords.shape[0]):
-            for j in range(3):
-                cam_pts[i, j] = (
-                    vol_origin[j]
-                    + (vox_size * vox_coords[i, j])
-                    + vox_size * offsets[j]
-                )
+        # 计算偏移量矩阵
+        cam_pts = vol_origin + vox_size * (vox_coords + offsets)
         return cam_pts
 
     @staticmethod

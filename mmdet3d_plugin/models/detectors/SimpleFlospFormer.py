@@ -54,12 +54,10 @@ class SimpleFlospFormer(BaseModule):
     def extract_img_feat(self, img_inputs, img_metas):
         img_enc_feats = self.image_encoder(img_inputs[0]) # B, N, C, H, W
 
-        start_time = time.time() 
+
         projected_pix = img_metas[f'projected_pix']
         fov_mask = img_metas[f'fov_mask']
         coarse_queries = self.project(img_enc_feats, projected_pix, fov_mask)
-        end_time = time.time()  # 结束计时
-        print(f"Project Time taken: {end_time - start_time:.6f} seconds")
 
         return coarse_queries
     
@@ -77,18 +75,12 @@ class SimpleFlospFormer(BaseModule):
         img_metas = data_dict['img_metas']
         gt_occ = data_dict['gt_occ']
 
-        start_time = time.time() 
         img_voxel_feats = self.extract_img_feat(img_inputs, img_metas) # torch.Size([1, 640, 128, 128, 16]) BNCHWD
-        end_time = time.time()  # 结束计时
-        print(f"Img Feats Time taken: {end_time - start_time:.6f} seconds")
 
-        conv_start_time = time.time() 
         # 输入: torch.Size([1, 640, 128, 128, 16]) -> torch.Size([1, 128, 128, 128, 16]) 
         img_voxel_feats_reduced = self.reduce_conv(img_voxel_feats.permute(0, 1, 4, 2, 3))  # 调整维度顺序以适配 Conv3d
         img_voxel_feats_reduced = img_voxel_feats_reduced.permute(0, 1, 3, 4, 2)  # 调整回原顺序
         voxel_feats_enc = self.occ_encoder(img_voxel_feats_reduced)
-        conv_end_time = time.time()  # 结束计时
-        print(f"Conv Time taken: {conv_end_time - conv_start_time:.6f} seconds")
         
         if len(voxel_feats_enc) > 1:
             voxel_feats_enc = [voxel_feats_enc[0]]

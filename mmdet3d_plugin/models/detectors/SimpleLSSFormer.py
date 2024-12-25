@@ -1,4 +1,5 @@
 import torch
+from mmcv.cnn import Conv2d
 from mmcv.runner import BaseModule
 from mmdet.models import DETECTORS
 from mmdet3d.models import builder
@@ -25,11 +26,9 @@ class SimpleLSSFormer(BaseModule):
         self.img_backbone = builder.build_backbone(img_backbone)
         self.img_neck = builder.build_neck(img_neck)
         
-        if depth_net is not None:
-            self.depth_net = builder.build_neck(depth_net)
+        self.depth_net = builder.build_neck(depth_net)
         if img_view_transformer is not None:
             self.img_view_transformer = builder.build_neck(img_view_transformer)
-            
         self.proposal_layer = builder.build_head(proposal_layer)
         self.VoxFormer_head = builder.build_head(VoxFormer_head)
         
