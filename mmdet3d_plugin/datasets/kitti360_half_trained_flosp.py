@@ -30,7 +30,8 @@ class KITTI360Dataset_half_flosp(Dataset):
         self.load_continuous = load_continuous
         self.splits = {
             "train": [
-                "2013_05_28_drive_0000_sync", "2013_05_28_drive_0002_sync", "2013_05_28_drive_0003_sync", "2013_05_28_drive_0004_sync"
+                "2013_05_28_drive_0000_sync", "2013_05_28_drive_0002_sync", "2013_05_28_drive_0003_sync", "2013_05_28_drive_0004_sync",
+                #  "2013_05_28_drive_0010_sync", "2013_05_28_drive_0005_sync", "2013_05_28_drive_0007_sync"
             ],
             "val": ["2013_05_28_drive_0006_sync"],
             "test": ["2013_05_28_drive_0009_sync"]
@@ -164,8 +165,6 @@ class KITTI360Dataset_half_flosp(Dataset):
         cam_k = info['P2'][0:3, 0:3]
         info["cam_k"] = cam_k
         
-        projected_pix_list = []
-        fov_mask_list = []
         for scale_3d in scale_3ds:
             projected_pix, fov_mask, pix_z = vox2pix(
                 info['T_velo_2_cam'],
@@ -182,11 +181,11 @@ class KITTI360Dataset_half_flosp(Dataset):
             
         target_1_path = os.path.join(self.label_root, info['sequence'], info['frame_id'] + "_1_1.npy")
         target = np.load(target_1_path)
-        info["target"] = target
-        target_8_path = os.path.join(self.label_root, info['sequence'], info['frame_id'] + "_1_8.npy")
-        target_1_8 = np.load(target_8_path)
-        CP_mega_matrix = compute_CP_mega_matrix(target_1_8)
-        info["CP_mega_matrix"] = CP_mega_matrix
+        # info["target"] = target
+        # target_8_path = os.path.join(self.label_root, info['sequence'], info['frame_id'] + "_1_8.npy")
+        # target_1_8 = np.load(target_8_path)
+        # CP_mega_matrix = compute_CP_mega_matrix(target_1_8)
+        # info["CP_mega_matrix"] = CP_mega_matrix
 
         # Compute the masks, each indicate the voxels of a local frustum
         if self.test_mode == False:
