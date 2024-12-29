@@ -19,3 +19,4 @@ packages/mmdetection3d/dist/mmdet3d-0.17.1-py3.7-linux-x86_64.egg
 packages/*/dist/*.egg
 
 UniPAD
+UniDrive
