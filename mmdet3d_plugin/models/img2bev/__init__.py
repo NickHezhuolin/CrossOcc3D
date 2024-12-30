@@ -5,5 +5,4 @@ from .LSSViewTransformer import LSSViewTransformer
 from .VoxelProposalLayer import VoxelProposalLayer
 from .VoxFormerHead import VoxFormerHead
 from .LSSViewTransformerLight import LSSViewTransformerLight
-from .backward_projection import *
 from .Flosp import MultiScaleFLoSP
