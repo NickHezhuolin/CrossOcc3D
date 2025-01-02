@@ -62,7 +62,7 @@ data_config={
 }
 
 train_pipeline = [
-    dict(type='LoadMultiViewImageFromFiles_Virtual', data_config=data_config, load_stereo_depth=True,
+    dict(type='LoadMultiViewImageFromFiles', data_config=data_config, load_stereo_depth=True,
          is_train=True, color_jitter=(0.4, 0.4, 0.4)),
     dict(type='CreateDepthFromLiDAR', data_root=data_root, dataset='kitti360', load_seg=False),
     dict(type='LoadAnnotationOcc', bda_aug_conf=bda_aug_conf, apply_bda=False,
