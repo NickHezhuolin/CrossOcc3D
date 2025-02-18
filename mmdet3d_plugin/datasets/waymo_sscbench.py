@@ -205,10 +205,10 @@ class WaymoSSCBenchDataset(Dataset):
         calib_out = {}
         # 3x4 projection matrix for left camera
 
-        calib_all["P2"][0] = calib_all["P2"][0] / 2
-        calib_all["P2"][2] = calib_all["P2"][2] / 2
-        calib_all["P2"][5] = calib_all["P2"][5] / 2
-        calib_all["P2"][6] = calib_all["P2"][6] / 2
+        # calib_all["P2"][0] = calib_all["P2"][0] / 2
+        # calib_all["P2"][2] = calib_all["P2"][2] / 2
+        # calib_all["P2"][5] = calib_all["P2"][5] / 2
+        # calib_all["P2"][6] = calib_all["P2"][6] / 2
 
         calib_out["P2"] = calib_all["P2"].reshape(3, 4)
         calib_out["Tr"] = np.identity(4)  # 4x4 matrix

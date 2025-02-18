@@ -1,9 +1,9 @@
 data_root = 'data/SSCBenchKITTI360'
 ann_file = 'data/SSCBenchKITTI360/unified/labels'
-stereo_depth_root = 'data/SSCBenchKITTI360/depth'
+stereo_depth_root = '/home/hez4sgh/1_ws/Metric3D/data/kitti360_depth'
 camera_used = ['left']
 
-gpu=2
+gpu=1
 
 dataset_type = 'KITTI360Dataset_half'
 point_cloud_range = [0, -25.6, -2, 51.2, 25.6, 4.4]
@@ -100,7 +100,7 @@ testset_config=dict(
     data_root=data_root,
     ann_file=ann_file,
     pipeline=test_pipeline,
-    split='test',
+    split='val',
     camera_used=camera_used,
     occ_size=occ_size,
     pc_range=point_cloud_range
@@ -118,7 +118,7 @@ train_dataloader_config = dict(
 
 test_dataloader_config = dict(
     batch_size=1,
-    num_workers=4)
+    num_workers=8)
 
 # model
 numC_Trans = 128
@@ -151,18 +151,18 @@ model = dict(
     type='SimpleLSSFormer',
     img_backbone=dict(
         type='CustomEfficientNet',
-        arch='b7',
+        arch='b4',
         drop_path_rate=0.2,
         frozen_stages=0,
         norm_eval=False,
         out_indices=(2, 3, 4, 5, 6),
         with_cp=True,
         init_cfg=dict(type='Pretrained', prefix='backbone', 
-        checkpoint='./ckpts/efficientnet-b7_3rdparty_8xb32-aa_in1k_20220119-bf03951c.pth'),
+        checkpoint='./ckpts/efficientnet-b4_3rdparty_8xb32-aa_in1k_20220119-45b8bd2b'),
     ),
     img_neck=dict(
         type='SECONDFPN',
-        in_channels=[48, 80, 224, 640, 2560],
+        in_channels= [32, 56, 160, 448, 1792], # [48, 80, 224, 640, 2560],
         upsample_strides=[0.5, 1, 2, 4, 4], 
         out_channels=[128, 128, 128, 128, 128]),
     depth_net=dict(
@@ -172,7 +172,7 @@ model = dict(
         numC_Trans=numC_Trans,
         cam_channels=33,
         grid_config=grid_config,
-        loss_depth_type='kld',
+        loss_depth_type=None,
         loss_depth_weight=0.0001,
     ),
     img_view_transformer=dict(
@@ -344,4 +344,4 @@ lr_scheduler = dict(
     frequency=1
 )
 
-# load_from='./ckpts/efficientnet-seg-depth.pth'
+load_from='./ckpts/efficientnet-seg-depth.pth'

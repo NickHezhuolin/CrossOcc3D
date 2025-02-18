@@ -1,24 +1,26 @@
 data_root = 'data/SSCBenchWaymo'
 ann_file = 'data/SSCBenchWaymo/unified/labels'
 stereo_depth_root = 'data/SSCBenchWaymo/depth'
-camera_used = ['image_1']
+camera_used = ['left']
+
+gpu=2
 
 dataset_type = 'WaymoSSCBenchDataset'
 point_cloud_range = [0, -25.6, -2, 51.2, 25.6, 4.4]
 occ_size = [256, 256, 32]
 
-waymo_class_frequencies = [
-    6609676234,
-    80263507,
-    150778,
-    14621,
-    8407737,
-    314538602,
-    79803104,
-    119425715,
-    180969842,
-    228187327,
-    8890485,
+kitti360_class_frequencies =  [
+    2305812911,
+    123212463,
+    96297,
+    4051087,   
+    45297267,
+    110397082,  
+    295883213,   
+    50037503,    
+    1561069,   
+    30516166,
+    1950115
 ]
 
 # 10 classes with unlabeled
@@ -47,7 +49,7 @@ bda_aug_conf = dict(
 )
 
 data_config={
-    'input_size': (384, 1408),
+    'input_size': (1280, 1920),
     # 'resize': (-0.06, 0.11),
     # 'rot': (-5.4, 5.4),
     # 'flip': True,
@@ -62,7 +64,7 @@ data_config={
 train_pipeline = [
     dict(type='LoadMultiViewImageFromFiles', data_config=data_config, load_stereo_depth=True,
          is_train=True, color_jitter=(0.4, 0.4, 0.4)),
-    dict(type='CreateDepthFromLiDAR', data_root=data_root, dataset='kitti360', load_seg=False),
+    dict(type='CreateDepthFromLiDAR', data_root=data_root, dataset='waymo', load_seg=False),
     dict(type='LoadAnnotationOcc', bda_aug_conf=bda_aug_conf, apply_bda=False,
             is_train=True, point_cloud_range=point_cloud_range),
     dict(type='CollectData', keys=['img_inputs', 'gt_occ'], 
@@ -85,7 +87,7 @@ trainset_config=dict(
 test_pipeline = [
     dict(type='LoadMultiViewImageFromFiles', data_config=data_config, load_stereo_depth=True,
          is_train=False, color_jitter=None),
-    dict(type='CreateDepthFromLiDAR', data_root=data_root, dataset='kitti360'),
+    dict(type='CreateDepthFromLiDAR', data_root=data_root, dataset='waymo'),
     dict(type='LoadAnnotationOcc', bda_aug_conf=bda_aug_conf, apply_bda=False,
             is_train=False, point_cloud_range=point_cloud_range),
     dict(type='CollectData', keys=['img_inputs', 'gt_occ'],  
@@ -146,7 +148,7 @@ _num_layers_self_ = 2
 _num_points_self_ = 8
 
 model = dict(
-    type='CGFormer',
+    type='SimpleLSSFormer',
     img_backbone=dict(
         type='CustomEfficientNet',
         arch='b4',
@@ -160,7 +162,7 @@ model = dict(
     ),
     img_neck=dict(
         type='SECONDFPN',
-        in_channels=[48, 80, 224, 640, 2560],
+        in_channels= [32, 56, 160, 448, 1792], # [48, 80, 224, 640, 2560],
         upsample_strides=[0.5, 1, 2, 4, 4], 
         out_channels=[128, 128, 128, 128, 128]),
     depth_net=dict(
@@ -170,7 +172,7 @@ model = dict(
         numC_Trans=numC_Trans,
         cam_channels=33,
         grid_config=grid_config,
-        loss_depth_type='kld',
+        loss_depth_type=None,
         loss_depth_weight=0.0001,
     ),
     img_view_transformer=dict(
@@ -276,81 +278,29 @@ model = dict(
            ),
         mlp_prior=True
     ),
-    
     occ_encoder_backbone=dict(
-        type='Fuser',
-        embed_dims=128,
-        global_aggregator=dict(
-            type='TPVGlobalAggregator',
-            embed_dims=_dim_,
-            split=[8,8,8],
-            grid_size=[128,128,16],
-            global_encoder_backbone=dict(
-                type='Swin',
-                embed_dims=96,
-                depths=[2, 2, 6, 2],
-                num_heads=[3, 6, 12, 24],
-                window_size=7,
-                mlp_ratio=4,
-                in_channels=128,
-                patch_size=4,
-                strides=[1,2,2,2],
-                frozen_stages=-1,
-                qkv_bias=True,
-                qk_scale=None,
-                drop_rate=0.,
-                attn_drop_rate=0.,
-                drop_path_rate=0.2,
-                patch_norm=True,
-                out_indices=[1,2,3],
-                with_cp=False,
-                convert_weights=True,
-                init_cfg=dict(
-                    type='Pretrained',
-                    checkpoint='./ckpts/swin_tiny_patch4_window7_224.pth'),
-                    ),
-            global_encoder_neck=dict(
-                type='GeneralizedLSSFPN',
-                in_channels=[192, 384, 768],
-                out_channels=_dim_,
-                start_level=0,
-                num_outs=3,
-                norm_cfg=dict(
-                type='BN2d',
-                requires_grad=True,
-                track_running_stats=False),
-                act_cfg=dict(
+        type='LocalAggregator',
+        local_encoder_backbone=dict(
+            type='CustomResNet3D',
+            numC_input=128,
+            num_layer=[2, 2, 2],
+            num_channels=[128, 128, 128],
+            stride=[1, 2, 2]
+        ),
+        local_encoder_neck=dict(
+            type='GeneralizedLSSFPN',
+            in_channels=[128, 128, 128],
+            out_channels=_dim_,
+            start_level=0,
+            num_outs=3,
+            norm_cfg=norm_cfg,
+            conv_cfg=dict(type='Conv3d'),
+            act_cfg=dict(
                 type='ReLU',
                 inplace=True),
-                upsample_cfg=dict(
-                mode='bilinear',
-                align_corners=False),
-            ),
-        ),
-        local_aggregator=dict(
-            type='LocalAggregator',
-            local_encoder_backbone=dict(
-                type='CustomResNet3D',
-                numC_input=128,
-                num_layer=[2, 2, 2],
-                num_channels=[128, 128, 128],
-                stride=[1, 2, 2]
-            ),
-            local_encoder_neck=dict(
-                type='GeneralizedLSSFPN',
-                in_channels=[128, 128, 128],
-                out_channels=_dim_,
-                start_level=0,
-                num_outs=3,
-                norm_cfg=norm_cfg,
-                conv_cfg=dict(type='Conv3d'),
-                act_cfg=dict(
-                    type='ReLU',
-                    inplace=True),
-                upsample_cfg=dict(
-                    mode='trilinear',
-                    align_corners=False
-                )
+            upsample_cfg=dict(
+                mode='trilinear',
+                align_corners=False
             )
         )
     ),
@@ -369,7 +319,7 @@ model = dict(
         },
         conv_cfg=dict(type='Conv3d', bias=False),
         norm_cfg=dict(type='GN', num_groups=32, requires_grad=True),
-        class_frequencies=waymo_class_frequencies
+        class_frequencies=kitti360_class_frequencies
     )
 )
 
