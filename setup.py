@@ -309,17 +309,17 @@ if __name__ == '__main__':
                 sources_cuda=['src/gather_points_cuda.cu']),
             make_cuda_ext(
                 name='smooth_sampler_ext',
-                module='mmdet3d_plugin.ops.smooth_sampler',
+                module='mmdet3d.ops.smooth_sampler',
                 sources=['src/smooth_sampler.cpp'],
                 sources_cuda=['src/smooth_sampler_cuda.cu']),
             make_cuda_ext(
                 name='voxel_pool_ext',
-                module='mmdet3d_plugin.ops.voxel_pool',
+                module='mmdet3d.ops.voxel_pool',
                 sources=['src/voxel_pool.cpp'],
                 sources_cuda=['src/voxel_pool_cuda.cu']),
             make_cuda_ext(
                 name='point_ops_ext',
-                module='mmdet3d_plugin.ops.point_ops',
+                module='mmdet3d.ops.point_ops',
                 sources=['src/point_ops.cpp'],
                 sources_cuda=['src/point_ops_cuda.cu']),
             make_cuda_ext(
