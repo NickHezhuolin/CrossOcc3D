@@ -4,11 +4,11 @@ import torch.utils.checkpoint as cp
 from mmcv.cnn import build_conv_layer, build_norm_layer
 from mmcv.runner import BaseModule
 from mmdet.models.builder import BACKBONES
-from mmdet3d_plugin.utils.sparse_utils import SparseLayerNorm, SparseConvNeXtBlock
+from mmdet3d_plugin.models.utils.sparse_utils import SparseLayerNorm, SparseConvNeXtBlock
 from timm.models.layers import trunc_normal_, DropPath
 from itertools import chain
 from typing import Sequence
-from mmdet3d_plugin.utils import sparse_utils
+from mmdet3d_plugin.models.utils import sparse_utils
 
 
 @BACKBONES.register_module()

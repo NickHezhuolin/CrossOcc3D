@@ -3,11 +3,11 @@ ann_file = 'data/SSCBenchKITTI360/unified/labels'
 stereo_depth_root = 'data/SSCBenchKITTI360/depth'
 camera_used = ['left']
 
+gpu=1
+
 dataset_type = 'KITTI360Dataset_half'
 point_cloud_range = [0, -25.6, -2, 51.2, 25.6, 4.4]
 occ_size = [256, 256, 32]
-
-gpu=2
 
 kitti360_class_frequencies =  [
     2305812911,
@@ -100,7 +100,7 @@ testset_config=dict(
     data_root=data_root,
     ann_file=ann_file,
     pipeline=test_pipeline,
-    split='val',
+    split='test',
     camera_used=camera_used,
     occ_size=occ_size,
     pc_range=point_cloud_range
@@ -118,7 +118,7 @@ train_dataloader_config = dict(
 
 test_dataloader_config = dict(
     batch_size=1,
-    num_workers=4)
+    num_workers=8)
 
 # model
 numC_Trans = 128
@@ -148,31 +148,33 @@ _num_layers_self_ = 2
 _num_points_self_ = 8
 
 model = dict(
-    type='CGFormer',
+    type='SimpleLSSFormer',
     img_backbone=dict(
-        type='CustomEfficientNet',
-        arch='b7',
-        drop_path_rate=0.2,
-        frozen_stages=0,
-        norm_eval=False,
-        out_indices=(2, 3, 4, 5, 6),
-        with_cp=True,
-        init_cfg=dict(type='Pretrained', prefix='backbone', 
-        checkpoint='./ckpts/efficientnet-b7_3rdparty_8xb32-aa_in1k_20220119-bf03951c.pth'),
+        type='ResNet',
+        depth=101,
+        num_stages=4,
+        out_indices=(0, 1, 2, 3),
+        frozen_stages=1,
+        norm_cfg=dict(type='BN2d', requires_grad=False),
+        norm_eval=True,
+        style='caffe',
+        dcn=dict(type='DCNv2', deform_groups=1, fallback_on_stride=False), # original DCNv2 will print log when perform load_state_dict
+        stage_with_dcn=(False, False, True, True)
     ),
     img_neck=dict(
         type='SECONDFPN',
-        in_channels=[48, 80, 224, 640, 2560],
-        upsample_strides=[0.5, 1, 2, 4, 4], 
-        out_channels=[128, 128, 128, 128, 128]),
+        in_channels=[256, 512, 1024, 2048],
+        upsample_strides=[0.5, 1, 2, 4],
+        out_channels=[128, 128, 128, 128]
+    ),
     depth_net=dict(
         type='GeometryDepth_Net',
         downsample=8,
-        numC_input=640,
+        numC_input=512,
         numC_Trans=numC_Trans,
         cam_channels=33,
         grid_config=grid_config,
-        loss_depth_type='kld',
+        loss_depth_type=None,
         loss_depth_weight=0.0001,
     ),
     img_view_transformer=dict(
@@ -278,81 +280,29 @@ model = dict(
            ),
         mlp_prior=True
     ),
-    
     occ_encoder_backbone=dict(
-        type='Fuser',
-        embed_dims=128,
-        global_aggregator=dict(
-            type='TPVGlobalAggregator',
-            embed_dims=_dim_,
-            split=[8,8,8],
-            grid_size=[128,128,16],
-            global_encoder_backbone=dict(
-                type='Swin',
-                embed_dims=96,
-                depths=[2, 2, 6, 2],
-                num_heads=[3, 6, 12, 24],
-                window_size=7,
-                mlp_ratio=4,
-                in_channels=128,
-                patch_size=4,
-                strides=[1,2,2,2],
-                frozen_stages=-1,
-                qkv_bias=True,
-                qk_scale=None,
-                drop_rate=0.,
-                attn_drop_rate=0.,
-                drop_path_rate=0.2,
-                patch_norm=True,
-                out_indices=[1,2,3],
-                with_cp=False,
-                convert_weights=True,
-                init_cfg=dict(
-                    type='Pretrained',
-                    checkpoint='./ckpts/swin_tiny_patch4_window7_224.pth'),
-                    ),
-            global_encoder_neck=dict(
-                type='GeneralizedLSSFPN',
-                in_channels=[192, 384, 768],
-                out_channels=_dim_,
-                start_level=0,
-                num_outs=3,
-                norm_cfg=dict(
-                type='BN2d',
-                requires_grad=True,
-                track_running_stats=False),
-                act_cfg=dict(
+        type='LocalAggregator',
+        local_encoder_backbone=dict(
+            type='CustomResNet3D',
+            numC_input=128,
+            num_layer=[2, 2, 2],
+            num_channels=[128, 128, 128],
+            stride=[1, 2, 2]
+        ),
+        local_encoder_neck=dict(
+            type='GeneralizedLSSFPN',
+            in_channels=[128, 128, 128],
+            out_channels=_dim_,
+            start_level=0,
+            num_outs=3,
+            norm_cfg=norm_cfg,
+            conv_cfg=dict(type='Conv3d'),
+            act_cfg=dict(
                 type='ReLU',
                 inplace=True),
-                upsample_cfg=dict(
-                mode='bilinear',
-                align_corners=False),
-            ),
-        ),
-        local_aggregator=dict(
-            type='LocalAggregator',
-            local_encoder_backbone=dict(
-                type='CustomResNet3D',
-                numC_input=128,
-                num_layer=[2, 2, 2],
-                num_channels=[128, 128, 128],
-                stride=[1, 2, 2]
-            ),
-            local_encoder_neck=dict(
-                type='GeneralizedLSSFPN',
-                in_channels=[128, 128, 128],
-                out_channels=_dim_,
-                start_level=0,
-                num_outs=3,
-                norm_cfg=norm_cfg,
-                conv_cfg=dict(type='Conv3d'),
-                act_cfg=dict(
-                    type='ReLU',
-                    inplace=True),
-                upsample_cfg=dict(
-                    mode='trilinear',
-                    align_corners=False
-                )
+            upsample_cfg=dict(
+                mode='trilinear',
+                align_corners=False
             )
         )
     ),
@@ -396,4 +346,5 @@ lr_scheduler = dict(
     frequency=1
 )
 
-load_from='./ckpts/efficientnet-seg-depth.pth'
+# load_from = 'bevformer_occ_gp_pretrain.pth'
+load_from = "/home/hez4sgh/1_work_dir//detr3d-agno/ckpts/r101_dcn_fcos3d_pretrain.pth"

@@ -1,9 +1,8 @@
 CUDA_VISIBLE_DEVICES=0 \
-nohup python main.py \
+python main.py \
 --eval \
---ckpt_path ./logs/CGFormer-Efficient-Swin-KITTI360-unified/tensorboard/version_4/checkpoints/best.ckpt \
---config_path configs/CGFormer-Efficient-Swin-KITTI360-unified.py \
---log_folder version4 \
+--ckpt_path logs/SimpleFormer-Resnet101-imgnet-Swin-KITTI360-unified-LSS/tensorboard/version_0/checkpoints/best.ckpt \
+--config_path logs/SimpleFormer-Resnet101-imgnet-Swin-KITTI360-unified-LSS/config.py \
+--log_folder version3 \
 --seed 7240 \
---log_every_n_steps 100 \
-> CCGFormer-Efficient-Swin-KITTI360-unified-Eval.log 2>&1 &
+--log_every_n_steps 100

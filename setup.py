@@ -308,39 +308,30 @@ if __name__ == '__main__':
                 sources=['src/gather_points.cpp'],
                 sources_cuda=['src/gather_points_cuda.cu']),
             make_cuda_ext(
-                name="bev_pool_ext",
-                module="mmdet3d.ops.bev_pool",
-                sources=[
-                    "src/bev_pool.cpp",
-                    "src/bev_pool_cuda.cu"]),
-            make_cuda_ext(
-                name="voxel_pooling_ext",
-                module="mmdet3d.ops.voxel_pooling",
-                sources=[
-                    "src/voxel_pooling_forward.cpp",
-                    "src/voxel_pooling_forward_cuda.cu"]),
-            make_cuda_ext(
-                name="voxel_pooling_stereo_ext",
-                module="mmdet3d.ops.voxel_pooling_stereo",
-                sources=[
-                    "src/voxel_pooling_forward.cpp",
-                    "src/voxel_pooling_forward_cuda.cu"]),
-            # GP
-            make_cuda_ext(
                 name='smooth_sampler_ext',
-                module='mmdet3d.ops.smooth_sampler',
+                module='mmdet3d_plugin.ops.smooth_sampler',
                 sources=['src/smooth_sampler.cpp'],
                 sources_cuda=['src/smooth_sampler_cuda.cu']),
             make_cuda_ext(
+                name='voxel_pool_ext',
+                module='mmdet3d_plugin.ops.voxel_pool',
+                sources=['src/voxel_pool.cpp'],
+                sources_cuda=['src/voxel_pool_cuda.cu']),
+            make_cuda_ext(
                 name='point_ops_ext',
-                module='mmdet3d.ops.point_ops',
+                module='mmdet3d_plugin.ops.point_ops',
                 sources=['src/point_ops.cpp'],
                 sources_cuda=['src/point_ops_cuda.cu']),
             make_cuda_ext(
-                name='voxel_pool_ext',
-                module='mmdet3d.ops.voxel_pool',
-                sources=['src/voxel_pool.cpp'],
-                sources_cuda=['src/voxel_pool_cuda.cu']),
+                name='bev_pool_v2_ext',
+                module='mmdet3d.ops.bev_pool_v2',
+                sources=['src/bev_pool.cpp'],
+                sources_cuda=['src/bev_pool_cuda.cu']),
+            make_cuda_ext(
+                name='bev_pool_ext',
+                module='mmdet3d.ops.bev_pool',
+                sources=['src/bev_pool.cpp'],
+                sources_cuda=['src/bev_pool_cuda.cu']),
         ],
         cmdclass={'build_ext': BuildExtension},
         zip_safe=False)

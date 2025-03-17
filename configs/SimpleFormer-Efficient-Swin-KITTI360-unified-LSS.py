@@ -1,6 +1,6 @@
 data_root = 'data/SSCBenchKITTI360'
 ann_file = 'data/SSCBenchKITTI360/unified/labels'
-stereo_depth_root = '/home/hez4sgh/1_ws/Metric3D/data/kitti360_depth'
+stereo_depth_root = 'data/SSCBenchKITTI360/depth'
 camera_used = ['left']
 
 gpu=1
@@ -100,7 +100,7 @@ testset_config=dict(
     data_root=data_root,
     ann_file=ann_file,
     pipeline=test_pipeline,
-    split='val',
+    split='test',
     camera_used=camera_used,
     occ_size=occ_size,
     pc_range=point_cloud_range
