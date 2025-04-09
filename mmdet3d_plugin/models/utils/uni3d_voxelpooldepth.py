@@ -295,9 +295,8 @@ class Uni3DVoxelPoolDepth(BaseModule):
         return voxel_space
 
     def assign_depth_target(self, pts, imgs, img_metas):
-        lidar2img = []
-        for img_meta in img_metas:
-            lidar2img.append(img_meta["lidar2img"])
+        B = len(img_metas['lidar2img'])
+        lidar2img = img_metas["lidar2img"][0].unsqueeze(0).repeat(B, 1, 1, 1, 1)
 
         lidar2img = pts[0].new_tensor(np.asarray(lidar2img))
         lidar2img = lidar2img.flatten(1, 2)
@@ -411,9 +410,7 @@ class Uni3DVoxelPoolDepth(BaseModule):
         frustum = self.frustum.unsqueeze(0).repeat(B, 1, 1, 1, 1)
         W, H, D = frustum.shape[1:-1]
 
-        lidar2img = []
-        for img_meta in img_metas:
-            lidar2img.append(img_meta["lidar2img"])
+        lidar2img = img_metas["lidar2img"][0].unsqueeze(0).repeat(B, 1, 1, 1, 1)
 
         lidar2img = frustum.new_tensor(np.asarray(lidar2img))
         _, N, C = lidar2img.shape[:3]

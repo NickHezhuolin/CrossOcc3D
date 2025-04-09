@@ -1,3 +1,3 @@
 from .occ_head import OccHead
 from .plugin_segmentation_head import plugin_segmentation_head
-from .GaussianHead import GaussianHead
+from .gaussian_head import GaussianHead

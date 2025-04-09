@@ -10,7 +10,7 @@ point_cloud_range = [0, -25.6, -2, 51.2, 25.6, 4.4]
 occ_size = [256, 256, 32]
 
 unified_voxel_size = [0.2, 0.2, 0.2]
-frustum_range = [-1, -1, 0.0, -1, -1, 64.0]
+frustum_range = [-1, -1, 2.0, -1, -1, 58.0]
 frustum_size = [-1, -1, 1.0]
 
 IMG_HEIGHT = 384
@@ -167,29 +167,34 @@ _num_points_self_ = 8
 model = dict(
     type='SimpleGSPretrain',
     img_backbone=dict(
-        type='ResNet',
-        depth=101,
-        num_stages=4,
+        type="MaskConvNeXt",
+        arch="small",
+        drop_path_rate=0.2,
         out_indices=(0, 1, 2, 3),
+        norm_out=True,
         frozen_stages=1,
-        norm_cfg=dict(type='BN2d', requires_grad=False),
-        norm_eval=True,
-        style='caffe',
-        dcn=dict(type='DCNv2', deform_groups=1, fallback_on_stride=False), # original DCNv2 will print log when perform load_state_dict
-        stage_with_dcn=(False, False, True, True),
-        init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet101'),
+        init_cfg=dict(
+            type="Pretrained",
+            checkpoint="/home/hez4sgh/1_work_dir/GaussianPretrain/data/ckpts/convnext_small_1k_224_ema.pth",
+        ),
+        mae_cfg=dict(
+            downsample_scale=32, downsample_dim=768, mask_ratio=0.3, learnable=False
+        ),
     ),
     img_neck=dict(
-        type='SECONDFPN',
-        in_channels=[256, 512, 1024, 2048],
-        upsample_strides=[0.5, 1, 2, 4],
-        out_channels=[128, 128, 128, 128]
+        type="FPN",
+        in_channels=[96, 192, 384, 768],
+        out_channels=128,
+        start_level=1,
+        add_extra_convs="on_output",
+        num_outs=4,
+        relu_before_extra_convs=True,
     ),
     depth_head=dict(type="SimpleDepth"),
     pts_bbox_head=dict(
         type="GaussianHead",
         fp16_enabled=False,
-        in_channels=512,
+        in_channels=128,
         unified_voxel_size=unified_voxel_size,
         unified_voxel_shape=occ_size,
         pc_range=point_cloud_range,
@@ -248,7 +253,7 @@ model = dict(
 
 """Training params."""
 learning_rate=3e-4
-training_steps=54000
+training_steps=27000
 
 optimizer = dict(
     type="AdamW",

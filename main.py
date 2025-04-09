@@ -56,10 +56,10 @@ if __name__ == '__main__':
     data_dm = DataModule(config)
 
     checkpoint_callback = ModelCheckpoint(
-        monitor='val/mIoU',
-        mode='max',
-        save_last=True,
-        filename='best')
+        save_top_k=-1,             # 保存所有 checkpoint（没有数量限制）
+        every_n_epochs=1,          # 每个 epoch 都保存一次
+        filename='epoch-{epoch}', # 文件名按 epoch 编号区分，如 epoch-1.ckpt
+    )
     
     if not config.eval:
         model_path = os.path.join(log_folder, "tensorboard", config['checkpoint_path'], "checkpoints/last.ckpt")
@@ -68,7 +68,7 @@ if __name__ == '__main__':
                 devices=[i for i in range(num_gpu)],
                 strategy=DDPStrategy(
                     accelerator='gpu',
-                    find_unused_parameters=False
+                    find_unused_parameters=True
                 ),
                 max_steps=config.training_steps,
                 resume_from_checkpoint=model_path,
@@ -87,7 +87,7 @@ if __name__ == '__main__':
                 devices=[i for i in range(num_gpu)],
                 strategy=DDPStrategy(
                     accelerator='gpu',
-                    find_unused_parameters=False
+                    find_unused_parameters=True
                 ),
                 max_steps=config.training_steps,
                 resume_from_checkpoint=None,
@@ -107,7 +107,7 @@ if __name__ == '__main__':
             devices=[i for i in range(num_gpu)],
             strategy=DDPStrategy(
                 accelerator='gpu',
-                find_unused_parameters=False
+                find_unused_parameters=True
             ),
             logger=tb_logger,
             profiler=profiler

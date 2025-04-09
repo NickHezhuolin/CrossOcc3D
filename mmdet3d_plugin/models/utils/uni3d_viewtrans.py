@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from mmcv.runner import force_fp32, auto_fp16
 from mmcv.cnn import xavier_init
 from mmcv.runner.base_module import BaseModule
-
+import pdb
 
 class Uni3DViewTrans(BaseModule):
     """Implements the view transformer."""
@@ -137,16 +137,15 @@ class Uni3DViewTrans(BaseModule):
 
     @force_fp32()
     def coord_preparing(self, img_metas):
-        B = len(img_metas)
-        # (B, X, Y, Z, 3)
+        B = len(img_metas['lidar2img'])
+        # (B, X, Y, Z, 3) : 体素生成正确
         reference_voxel = self.reference_voxel.unsqueeze(0).repeat(B, 1, 1, 1, 1)
+        
+        lidar2img = img_metas["lidar2img"][0].unsqueeze(0).repeat(B, 1, 1, 1, 1)
+        img_shape = torch.tensor([[img_metas['img_shape'][0], img_metas['img_shape'][1], 3]])  # Shape: (1, 3) ：  hw3
+        img_shape = img_shape.unsqueeze(0).repeat(B, 1, 1) 
 
-        lidar2img, img_shape = [], []
-        for img_meta in img_metas:
-            lidar2img.append(img_meta["lidar2img"])
-            img_shape.append(img_meta["img_shape"])
-
-        lidar2img = reference_voxel.new_tensor(np.asarray(lidar2img))
+        lidar2img = reference_voxel.new_tensor(np.asarray(lidar2img.cpu()))
         _, num_cam, num_sweep = lidar2img.shape[:3]
         lidar2img = lidar2img.flatten(1, 2)
 
@@ -154,19 +153,22 @@ class Uni3DViewTrans(BaseModule):
             (reference_voxel, torch.ones_like(reference_voxel[..., :1])), -1
         ).flatten(1, 3)
 
+        # 体素坐标投影结果 - 1 ,1 , 2097152, 4(uvd1)
         reference_voxel_cam = torch.matmul(
             lidar2img.unsqueeze(2), reference_voxel.unsqueeze(1).unsqueeze(-1)
         ).squeeze(-1)
+        
         eps = 1e-5
         referenece_depth = reference_voxel_cam[..., 2:3].clone()
         mask = referenece_depth > eps
-
+        
+        # 按 d 归一化体素坐标投影结果 - 1 ,1 , 2097152, 2 （u/d，v/d) ; eps 防止除零
         reference_voxel_cam = reference_voxel_cam[..., 0:2] / torch.maximum(
             reference_voxel_cam[..., 2:3],
             torch.ones_like(reference_voxel_cam[..., 2:3]) * eps,
         )
 
-        img_shape = reference_voxel_cam.new_tensor(np.asarray(img_shape))
+        img_shape = reference_voxel_cam.new_tensor(np.asarray(img_shape.cpu()))
         Hs, Ws = img_shape[..., 0:1], img_shape[..., 1:2]
         reference_voxel_cam[..., 0] /= Ws
         reference_voxel_cam[..., 1] /= Hs
@@ -205,11 +207,11 @@ class Uni3DViewTrans(BaseModule):
         )
 
         sampled_feats = []
-        for lvl, feat in enumerate(mlvl_feats):
+        for lvl, feat in enumerate([mlvl_feats]):
             B, M, C, H, W = feat.size()
             feat = feat.view(B * M, C, H, W)
             feat = F.grid_sample(
-                feat, batch_reference_voxel_cam[..., None, :2], align_corners=True
+                feat, batch_reference_voxel_cam.to(feat.device)[..., None, :2], align_corners=True
             ).squeeze(-1)
             sampled_feats.append(feat)
         sampled_feats = torch.stack(sampled_feats, dim=-1)
@@ -220,7 +222,7 @@ class Uni3DViewTrans(BaseModule):
             depth = (
                 F.grid_sample(
                     depth,
-                    batch_reference_voxel_cam.unsqueeze(1).unsqueeze(-2),
+                    batch_reference_voxel_cam.to(depth.device).unsqueeze(1).unsqueeze(-2),
                     align_corners=True,
                 )
                 .squeeze(-1)
