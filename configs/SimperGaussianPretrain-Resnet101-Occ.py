@@ -76,7 +76,7 @@ train_pipeline = [
             is_train=True, point_cloud_range=point_cloud_range),
     dict(type='CollectData', keys=['img_inputs', 'gt_occ', 'points'], 
             meta_keys=['pc_range', 'occ_size', 'sequence', 'frame_id', 'raw_img', 
-                       'stereo_depth', 'focal_length', 'baseline', 'img_shape', 
+                       'stereo_depth', 'focal_length', 'img_shape', 
                        'gt_depths','lidar2img','cam_params', 'fovx', 'fovy', 'viewmatrix',
                        'projmatrix', 'cam_pos'
                        ])
@@ -104,7 +104,7 @@ test_pipeline = [
             is_train=False, point_cloud_range=point_cloud_range),
     dict(type='CollectData', keys=['img_inputs', 'gt_occ', 'points'],  
             meta_keys=['pc_range', 'occ_size', 'sequence', 'frame_id', 'raw_img', 
-                       'stereo_depth', 'focal_length', 'baseline', 'img_shape', 
+                       'stereo_depth', 'focal_length', 'img_shape', 
                        'gt_depths','lidar2img','cam_params', 'fovx', 'fovy', 'viewmatrix',
                        'projmatrix', 'cam_pos'
                        ])

@@ -51,7 +51,7 @@ train_pipeline = [
     dict(type='LoadAnnotationOcc', bda_aug_conf=bda_aug_conf, apply_bda=False,
             is_train=True, point_cloud_range=point_cloud_range),
     dict(type='CollectData', keys=['img_inputs', 'gt_occ'], 
-            meta_keys=['pc_range', 'occ_size', 'raw_img', 'stereo_depth', 'focal_length', 'baseline', 'img_shape', 'gt_depths']),
+            meta_keys=['pc_range', 'occ_size', 'raw_img', 'stereo_depth', 'focal_length', 'img_shape', 'gt_depths']),
 ]
 
 trainset_config=dict(
@@ -74,7 +74,7 @@ test_pipeline = [
     dict(type='LoadAnnotationOcc', bda_aug_conf=bda_aug_conf, apply_bda=False,
             is_train=False, point_cloud_range=point_cloud_range),
     dict(type='CollectData', keys=['img_inputs', 'gt_occ'],  
-            meta_keys=['pc_range', 'occ_size', 'sequence', 'frame_id', 'raw_img', 'stereo_depth', 'focal_length', 'baseline', 'img_shape', 'gt_depths'])
+            meta_keys=['pc_range', 'occ_size', 'sequence', 'frame_id', 'raw_img', 'stereo_depth', 'focal_length', 'img_shape', 'gt_depths'])
 ]
 
 testset_config=dict(
