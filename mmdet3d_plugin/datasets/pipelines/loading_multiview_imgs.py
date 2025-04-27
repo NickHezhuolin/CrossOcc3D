@@ -123,7 +123,6 @@ class LoadMultiViewImageFromFiles(object):
         img_filenames = results['img_filename']
 
         focal_length = results['focal_length']
-        baseline = results['baseline']
 
         data_lists = []
         raw_img_list = []
@@ -217,7 +216,6 @@ class LoadMultiViewImageFromFiles(object):
             result_list.append(torch.cat([x[i] for x in data_lists], dim=0))
         
         results['focal_length'] = torch.tensor(focal_length, dtype=torch.float32)
-        results['baseline']  = torch.tensor(baseline, dtype=torch.float32)
         results['raw_img'] = raw_img_list
         results['lidar2img'] = lidar2img_rts
         results['fovx'] = fovx_list
