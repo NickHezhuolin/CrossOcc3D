@@ -68,7 +68,7 @@ if __name__ == '__main__':
                 devices=[i for i in range(num_gpu)],
                 strategy=DDPStrategy(
                     accelerator='gpu',
-                    find_unused_parameters=True
+                    find_unused_parameters=False
                 ),
                 max_steps=config.training_steps,
                 resume_from_checkpoint=model_path,
@@ -87,7 +87,7 @@ if __name__ == '__main__':
                 devices=[i for i in range(num_gpu)],
                 strategy=DDPStrategy(
                     accelerator='gpu',
-                    find_unused_parameters=True
+                    find_unused_parameters=False
                 ),
                 max_steps=config.training_steps,
                 resume_from_checkpoint=None,
@@ -107,7 +107,7 @@ if __name__ == '__main__':
             devices=[i for i in range(num_gpu)],
             strategy=DDPStrategy(
                 accelerator='gpu',
-                find_unused_parameters=True
+                find_unused_parameters=False
             ),
             logger=tb_logger,
             profiler=profiler

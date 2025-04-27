@@ -6,8 +6,8 @@ from argparse import ArgumentParser
 
 def parse_config():
     parser = ArgumentParser()
-    parser.add_argument('--source_path', default='logs/CGFormer-Efficient-Swin-SemanticKITTI/tensorboard/version_0/checkpoints/best.ckpt')
-    parser.add_argument('--dst_path', default='ckpts/efficientnet-seg-depth.pth')
+    parser.add_argument('--source_path', default='/home/hez4sgh/1_work_dir/CGFormer/logs/SimperGaussianPretrain-Resnet101/tensorboard/version_1/checkpoints/epoch-epoch=19.ckpt')
+    parser.add_argument('--dst_path', default='ckpts/gs-resnet101-kitti360-cgformer-learning-setting.pth')
     
     args = parser.parse_args()
 
