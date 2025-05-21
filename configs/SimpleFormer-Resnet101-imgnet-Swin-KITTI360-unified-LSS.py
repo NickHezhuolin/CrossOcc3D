@@ -3,7 +3,7 @@ ann_file = 'data/SSCBenchKITTI360/unified/labels'
 stereo_depth_root = 'data/SSCBenchKITTI360/depth'
 camera_used = ['left']
 
-gpu=1
+gpu=4
 
 dataset_type = 'KITTI360Dataset_half'
 point_cloud_range = [0, -25.6, -2, 51.2, 25.6, 4.4]
@@ -68,7 +68,7 @@ train_pipeline = [
     dict(type='LoadAnnotationOcc', bda_aug_conf=bda_aug_conf, apply_bda=False,
             is_train=True, point_cloud_range=point_cloud_range),
     dict(type='CollectData', keys=['img_inputs', 'gt_occ'], 
-            meta_keys=['pc_range', 'occ_size', 'raw_img', 'stereo_depth', 'focal_length', 'img_shape', 'gt_depths']),
+            meta_keys=['pc_range', 'occ_size', 'raw_img', 'stereo_depth', 'focal_length', 'baseline', 'img_shape', 'gt_depths']),
 ]
 
 trainset_config=dict(

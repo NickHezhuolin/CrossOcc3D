@@ -130,6 +130,7 @@ class KITTI360Dataset_half(Dataset):
             lidar2cam_rts.append(info['T_velo_2_cam'])
         
         focal_length = info['P2'][0, 0]
+        baseline = self.dynamic_baseline(info)
 
         input_dict.update(
             dict(
@@ -137,7 +138,8 @@ class KITTI360Dataset_half(Dataset):
                 lidar2img=lidar2img_rts,
                 cam_intrinsic=cam_intrinsics,
                 lidar2cam=lidar2cam_rts,
-                focal_length=focal_length
+                focal_length=focal_length,
+                baseline=baseline
             ))
         input_dict['stereo_depth_path'] = info['stereo_depth_path']
         # gt_occ is None for test-set
@@ -250,3 +252,9 @@ class KITTI360Dataset_half(Dataset):
         zeros.
         """
         self.flag = np.zeros(len(self), dtype=np.uint8)
+    
+    def dynamic_baseline(self, infos):
+        P3 = infos['P3']
+        P2 = infos['P2']
+        baseline = P3[0,3]/(-P3[0,0]) - P2[0,3]/(-P2[0,0])
+        return baseline
