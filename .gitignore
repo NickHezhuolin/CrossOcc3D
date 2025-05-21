@@ -23,3 +23,4 @@ UniPAD
 UniDrive
 preprocess/
 vis/
+mmdet3d_plugin/ops/diff-gaussian-rasterization
