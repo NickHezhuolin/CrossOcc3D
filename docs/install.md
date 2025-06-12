@@ -56,3 +56,11 @@ pip install -r docs/requirements.txt
 pip install yapf==0.40.0
 pip3 install natten==0.14.6+torch1101cu113 -f https://shi-labs.com/natten/wheels
 ```
+
+**e. Fix bugs (known now)**
+Install mmdet3d_plugin/ops/diff-gaussian-rasterization, provided by [GSPretrain](https://github.com/public-bots/gaussianpretrain)
+
+```shell
+cd mmdet3d_plugin/ops/diff-gaussian-rasterization
+python setup.py develop
+```
