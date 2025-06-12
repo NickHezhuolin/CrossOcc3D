@@ -157,13 +157,14 @@ class WaymoSSCBenchDataset(Dataset):
             voxel_base_path = os.path.join(self.ann_file, sequence)
             img_base_path = os.path.join(self.data_root, "kitti_format_cam", 'image_1', sequence)
 
-            if self.load_continuous:
-                id_base_path = os.path.join(img_base_path, '*.png')
+            id_base_path = os.path.join(img_base_path, '*.png')
             
             for id_path in glob.glob(id_base_path):
                 img_id = id_path.split("/")[-1].split(".")[0]
                 img_2_path = os.path.join(img_base_path, img_id + '.png')
                 voxel_path = os.path.join(voxel_base_path, img_id + '_1_1.npy')
+
+                stereo_depth_path = os.path.join(self.stereo_depth_root, "sequences", sequence, img_id + '.npz')
 
                 if not os.path.exists(voxel_path):
                     voxel_path = None
@@ -175,7 +176,8 @@ class WaymoSSCBenchDataset(Dataset):
                         "P2": P,
                         "T_velo_2_cam": T_velo_2_cam,
                         "proj_matrix_2": proj_matrix,
-                        "voxel_path": voxel_path
+                        "voxel_path": voxel_path,
+                        "stereo_depth_path": stereo_depth_path
                     })
                 
         return scans
@@ -203,12 +205,16 @@ class WaymoSSCBenchDataset(Dataset):
         calib_out = {}
         # 3x4 projection matrix for left camera
 
-        # calib_all["P2"][0] = calib_all["P2"][0] / 2
-        # calib_all["P2"][2] = calib_all["P2"][2] / 2
-        # calib_all["P2"][5] = calib_all["P2"][5] / 2
-        # calib_all["P2"][6] = calib_all["P2"][6] / 2
+        # calib_all["P2"][0] = calib_all["P2"][0] * 0.5
+        # calib_all["P2"][2] = calib_all["P2"][2] * 0.5
+        # calib_all["P2"][5] = calib_all["P2"][5] * 0.5
+        # calib_all["P2"][6] = calib_all["P2"][6] * 0.5
 
-        calib_out["P2"] = calib_all["P2"].reshape(3, 4)
+        P2 = calib_all["P2"].reshape(3, 4)
+        P2_full = np.eye(4)
+        P2_full[:3, :4] = P2
+        calib_out["P2"] = P2_full  # shape (4, 4)
+
         calib_out["Tr"] = np.identity(4)  # 4x4 matrix
         calib_out["Tr"][:3, :4] = calib_all["Tr"].reshape(3, 4)
         return calib_out

@@ -3,7 +3,7 @@ ann_file = 'data/SSCBenchWaymo/unified/labels'
 stereo_depth_root = 'data/SSCBenchWaymo/depth'
 camera_used = ['image_1']
 
-gpu=2
+gpu=8
 
 dataset_type = 'WaymoSSCBenchDataset'
 point_cloud_range = [0, -25.6, -2, 51.2, 25.6, 4.4]
@@ -138,25 +138,27 @@ _num_points_self_ = 8
 model = dict(
     type='SimpleLSSFormer',
     img_backbone=dict(
-        type='CustomEfficientNet',
-        arch='b4',
-        drop_path_rate=0.2,
-        frozen_stages=0,
-        norm_eval=False,
-        out_indices=(2, 3, 4, 5, 6),
-        with_cp=True,
-        init_cfg=dict(type='Pretrained', prefix='backbone', 
-        checkpoint='./ckpts/efficientnet-b4_3rdparty_8xb32-aa_in1k_20220119-45b8bd2b'),
+        type='ResNet',
+        depth=101,
+        num_stages=4,
+        out_indices=(0, 1, 2, 3),
+        frozen_stages=3,
+        norm_cfg=dict(type='BN2d', requires_grad=False),
+        norm_eval=True,
+        style='caffe',
+        dcn=dict(type='DCNv2', deform_groups=1, fallback_on_stride=False), # original DCNv2 will print log when perform load_state_dict
+        stage_with_dcn=(False, False, True, True)
     ),
     img_neck=dict(
         type='SECONDFPN',
-        in_channels= [32, 56, 160, 448, 1792], # [48, 80, 224, 640, 2560],
-        upsample_strides=[0.5, 1, 2, 4, 4], 
-        out_channels=[128, 128, 128, 128, 128]),
+        in_channels=[256, 512, 1024, 2048],
+        upsample_strides=[0.5, 1, 2, 4],
+        out_channels=[128, 128, 128, 128]
+    ),
     depth_net=dict(
         type='GeometryDepth_Net',
         downsample=8,
-        numC_input=640,
+        numC_input=512,
         numC_Trans=numC_Trans,
         cam_channels=33,
         grid_config=grid_config,

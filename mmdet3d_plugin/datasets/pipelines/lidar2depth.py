@@ -1,6 +1,7 @@
 import os
 import torch
 import numpy as np
+import pickle
 from mmdet.datasets.builder import PIPELINES
 from .learning_map import learning_map
 
@@ -13,7 +14,7 @@ class CreateDepthFromLiDAR(object):
     ):
         self.data_root = data_root
         self.dataset = dataset
-        assert self.dataset in ['kitti', 'kitti360']
+        assert self.dataset in ['kitti', 'kitti360','waymo']
         if load_seg:
             self.learning_map = learning_map[dataset]
         self.seg_label_root = os.path.join(data_root, 'lidarseg')
@@ -44,6 +45,19 @@ class CreateDepthFromLiDAR(object):
             lidar_filename = os.path.join(self.data_root, 'data_2d_raw', seq_id, 'velodyne_points', 'data', filename.replace(".png", ".bin"))
             lidar_points = np.fromfile(lidar_filename, dtype=np.float32).reshape(-1, 4)
             lidar_points = torch.from_numpy(lidar_points[:, :3]).float()
+            label_points = None
+        
+        elif self.dataset == 'waymo':
+            # data/SSCBenchWaymo/kitti_format_cam/image_1/000/000.png
+            img_filename = results['img_filename'][0]
+            _, _, seq_id, filename = img_filename.split("/")[-4:]
+            # data/SSCBenchWaymo/velodyne_points/stuff/seq_dict_000.pkl
+            pkl_filename = os.path.join(self.data_root, 'velodyne_points', 'stuff', f'seq_dict_{seq_id}.pkl')
+            with open(pkl_filename, 'rb') as file:
+                data = pickle.load(file)
+            frame_id = int(os.path.splitext(filename)[0])
+            lidar_points = data[frame_id]['points_all'] # shape: (N, 4), dtype: float64
+            lidar_points = torch.from_numpy(lidar_points[:, :3].astype(np.float32)) 
             label_points = None
         else:
             raise NotImplementedError

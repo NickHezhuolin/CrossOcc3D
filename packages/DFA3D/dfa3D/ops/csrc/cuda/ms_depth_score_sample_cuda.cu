@@ -42,6 +42,18 @@ void ms_depth_score_sample_im2col_cuda(cudaStream_t stream, const scalar_t *data
 
   cudaError_t err = cudaGetLastError();
   if (err != cudaSuccess) {
+    printf("[CUDA ERROR] ms_depth_score_sample_col2im_cuda failed: %s\n", cudaGetErrorString(err));
+    printf("  num_kernels          = %d\n", num_kernels);
+    printf("  num_threads          = %d\n", num_threads);
+    printf("  num_blocks           = %d\n", GET_BLOCKS(num_actual_kernels, num_threads));
+    printf("  batch_size           = %d\n", batch_size);
+    printf("  num_query            = %d\n", num_query);
+    printf("  num_heads            = %d\n", num_heads);
+    printf("  channels_out         = %d\n", channels_out);
+    printf("  spatial_size         = %d\n", spatial_size);
+    printf("  num_levels           = %d\n", num_levels);
+    printf("  num_point            = %d\n", num_point);
+    printf("  channels             = %d\n", channels);
     printf("error in ms_depth_score_sample_im2col_cuda: %s\n", cudaGetErrorString(err));
   }
 }

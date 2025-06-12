@@ -535,7 +535,7 @@ class MSDeformableAttention3D_DFA3D(MSDeformableAttention3D):
                 bs, num_query, num_heads, num_levels, num_all_points, xy)
             sampling_locations_ref = sampling_locations_ref.view(
                 bs, num_query, num_heads, num_levels, num_all_points, xy)
-        
+
         elif reference_points.shape[-1] == 4:
             assert False
         else:
@@ -678,6 +678,10 @@ class DeformCrossAttention_DFA3D(DeformCrossAttention):
             indexes.append(index_query_per_img)
         max_len = max([len(each) for each in indexes])
         # each camera only interacts with its corresponding BEV queries. This step can  greatly save GPU memory.
+
+        # if max_len == 0:                           # 本 camera 无可见 BEV 锚点
+        #     return inp_residual                    # 直接残差返回即可
+
         queries_rebatch = query.new_zeros(
             [bs, self.num_cams, max_len, self.embed_dims])
         reference_points_rebatch = reference_points_cam.new_zeros(

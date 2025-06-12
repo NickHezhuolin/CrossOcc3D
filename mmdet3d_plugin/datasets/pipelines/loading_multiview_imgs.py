@@ -5,6 +5,7 @@ from PIL import Image
 from torchvision import transforms
 from mmdet.datasets.builder import PIPELINES
 import math
+import os
 
 @PIPELINES.register_module()
 class LoadMultiViewImageFromFiles(object):
@@ -123,7 +124,7 @@ class LoadMultiViewImageFromFiles(object):
         img_filenames = results['img_filename']
 
         focal_length = results['focal_length']
-        baseline = results['baseline']
+        # baseline = results['baseline']
 
         data_lists = []
         raw_img_list = []
@@ -205,8 +206,18 @@ class LoadMultiViewImageFromFiles(object):
         
         if self.load_stereo_depth:
             stereo_depth_path = results['stereo_depth_path']
-            stereo_depth = np.load(stereo_depth_path)
-            stereo_depth = Image.fromarray(stereo_depth)
+            ext = os.path.splitext(stereo_depth_path)[-1].lower()
+
+            if ext == '.npz':
+                with np.load(stereo_depth_path) as data:
+                    stereo_depth_arr = data['depth']  # 提取 npz 中的 'depth' 键
+                    stereo_depth = Image.fromarray(stereo_depth_arr.astype(np.float32))
+            elif ext == '.npy':
+                stereo_depth = np.load(stereo_depth_path)
+                stereo_depth = Image.fromarray(stereo_depth)
+            else:
+                raise ValueError(f"Unsupported depth file format: {ext}")
+            
             resize, resize_dims, crop, flip, rotate = img_augs
             stereo_depth = self.img_transform_core(stereo_depth, resize_dims=resize_dims,
                     crop=crop, flip=flip, rotate=rotate)
@@ -217,7 +228,7 @@ class LoadMultiViewImageFromFiles(object):
             result_list.append(torch.cat([x[i] for x in data_lists], dim=0))
         
         results['focal_length'] = torch.tensor(focal_length, dtype=torch.float32)
-        results['baseline']  = torch.tensor(baseline, dtype=torch.float32)
+        # results['baseline']  = torch.tensor(baseline, dtype=torch.float32)
         results['raw_img'] = raw_img_list
         results['lidar2img'] = lidar2img_rts
         results['fovx'] = fovx_list

@@ -7,7 +7,7 @@ dataset_type = 'KITTI360Dataset_half'
 point_cloud_range = [0, -25.6, -2, 51.2, 25.6, 4.4]
 occ_size = [256, 256, 32]
 
-gpu=2
+gpu=8
 
 kitti360_class_frequencies =  [
     2305812911,

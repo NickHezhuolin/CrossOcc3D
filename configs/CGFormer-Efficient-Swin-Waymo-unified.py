@@ -7,19 +7,10 @@ dataset_type = 'WaymoSSCBenchDataset'
 point_cloud_range = [0, -25.6, -2, 51.2, 25.6, 4.4]
 occ_size = [256, 256, 32]
 
-waymo_class_frequencies = [
-    6609676234,
-    80263507,
-    150778,
-    14621,
-    8407737,
-    314538602,
-    79803104,
-    119425715,
-    180969842,
-    228187327,
-    8890485,
-]
+gpu=2
+
+waymo_class_frequencies  = [6609676234, 80263507, 150778, 14621, 8407737, 314538602, 79803104, 119425715, 180969842, 228187327, 8890485]
+
 
 # 10 classes with unlabeled
 class_names = [
@@ -47,11 +38,11 @@ bda_aug_conf = dict(
 )
 
 data_config={
-    'input_size': (384, 1408),
+    'input_size': (1280, 1920),
     # 'resize': (-0.06, 0.11),
     # 'rot': (-5.4, 5.4),
     # 'flip': True,
-    'resize': (0., 0.),
+    'resize': (0.5, 0.5),
     'rot': (0.0, 0.0 ),
     'flip': (0.0, 0.0 ),
     'flip': False,
@@ -62,7 +53,7 @@ data_config={
 train_pipeline = [
     dict(type='LoadMultiViewImageFromFiles', data_config=data_config, load_stereo_depth=True,
          is_train=True, color_jitter=(0.4, 0.4, 0.4)),
-    dict(type='CreateDepthFromLiDAR', data_root=data_root, dataset='kitti360', load_seg=False),
+    dict(type='CreateDepthFromLiDAR', data_root=data_root, dataset='waymo', load_seg=False),
     dict(type='LoadAnnotationOcc', bda_aug_conf=bda_aug_conf, apply_bda=False,
             is_train=True, point_cloud_range=point_cloud_range),
     dict(type='CollectData', keys=['img_inputs', 'gt_occ'], 
@@ -85,7 +76,7 @@ trainset_config=dict(
 test_pipeline = [
     dict(type='LoadMultiViewImageFromFiles', data_config=data_config, load_stereo_depth=True,
          is_train=False, color_jitter=None),
-    dict(type='CreateDepthFromLiDAR', data_root=data_root, dataset='kitti360'),
+    dict(type='CreateDepthFromLiDAR', data_root=data_root, dataset='waymo'),
     dict(type='LoadAnnotationOcc', bda_aug_conf=bda_aug_conf, apply_bda=False,
             is_train=False, point_cloud_range=point_cloud_range),
     dict(type='CollectData', keys=['img_inputs', 'gt_occ'],  
@@ -158,9 +149,9 @@ model = dict(
         init_cfg=dict(type='Pretrained', prefix='backbone', 
         checkpoint='./ckpts/efficientnet-b4_3rdparty_8xb32-aa_in1k_20220119-45b8bd2b'),
     ),
-    img_neck=dict(
+        img_neck=dict(
         type='SECONDFPN',
-        in_channels=[48, 80, 224, 640, 2560],
+        in_channels= [32, 56, 160, 448, 1792], # [48, 80, 224, 640, 2560],
         upsample_strides=[0.5, 1, 2, 4, 4], 
         out_channels=[128, 128, 128, 128, 128]),
     depth_net=dict(
